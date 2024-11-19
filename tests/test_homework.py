@@ -11,81 +11,45 @@ import pandas as pd  # type: ignore
 MODEL_FILENAME = "files/models/model.pkl"
 MODEL_COMPONENTS = [
     "OneHotEncoder",
-    "RandomForestClassifier",
+    "PCA",
+    "StandardScaler",
+    "SelectKBest",
+    "SVC",
 ]
 SCORES = [
-    0.623,
-    0.634,
+    0.661,
+    0.666,
 ]
 METRICS = [
     {
         "type": "metrics",
         "dataset": "train",
-        "precision": 0.641,
-        "balanced_accuracy": 0.623,
-        "recall": 0.294,
-        "f1_score": 0.403,
+        "precision": 0.691,
+        "balanced_accuracy": 0.661,
+        "recall": 0.370,
+        "f1_score": 0.482,
     },
     {
         "type": "metrics",
         "dataset": "test",
-        "precision": 0.622,
-        "balanced_accuracy": 0.634,
-        "recall": 0.321,
-        "f1_score": 0.424,
+        "precision": 0.673,
+        "balanced_accuracy": 0.661,
+        "recall": 0.370,
+        "f1_score": 0.482,
     },
     {
         "type": "cm_matrix",
         "dataset": "train",
-        "true_0": {"predicted_0": 15450, "predicted_1": None},
-        "true_1": {"predicted_0": None, "predicted_1": 1390},
+        "true_0": {"predicted_0": 15440, "predicted_1": None},
+        "true_1": {"predicted_0": None, "predicted_1": 1735},
     },
     {
         "type": "cm_matrix",
         "dataset": "test",
-        "true_0": {"predicted_0": 6700, "predicted_1": None},
-        "true_1": {"predicted_0": None, "predicted_1": 610},
+        "true_0": {"predicted_0": 6710, "predicted_1": None},
+        "true_1": {"predicted_0": None, "predicted_1": 730},
     },
 ]
-
-
-def split_df(df):
-    """User function"""
-    # Prepare the data
-    df = df.loc[(df["EDUCATION"] != 0)]
-    df = df.loc[(df["MARRIAGE"] != 0)]
-    df.loc[df["EDUCATION"] > 4, "EDUCATION"] = 4
-
-    # Split the data
-    selected_columns = [
-        "LIMIT_BAL",
-        "SEX",
-        "EDUCATION",
-        "MARRIAGE",
-        "AGE",
-        "PAY_0",
-        "PAY_2",
-        "PAY_3",
-        "PAY_4",
-        "PAY_5",
-        "PAY_6",
-        "BILL_AMT1",
-        "BILL_AMT2",
-        "BILL_AMT3",
-        "BILL_AMT4",
-        "BILL_AMT5",
-        "BILL_AMT6",
-        "PAY_AMT1",
-        "PAY_AMT2",
-        "PAY_AMT3",
-        "PAY_AMT4",
-        "PAY_AMT5",
-        "PAY_AMT6",
-    ]
-
-    x_df = df[selected_columns]
-    y_df = df["default payment next month"]
-    return x_df, y_df
 
 
 # ------------------------------------------------------------------------------
@@ -107,6 +71,23 @@ def _test_components(model):
     current_components = [str(model.estimator[i]) for i in range(len(model.estimator))]
     for component in MODEL_COMPONENTS:
         assert any(component in x for x in current_components)
+
+
+def _load_grading_data():
+    """Load grading data"""
+    with open("files/grading/x_train.pkl", "rb") as file:
+        x_train = pickle.load(file)
+
+    with open("files/grading/y_train.pkl", "rb") as file:
+        y_train = pickle.load(file)
+
+    with open("files/grading/x_test.pkl", "rb") as file:
+        x_test = pickle.load(file)
+
+    with open("files/grading/y_test.pkl", "rb") as file:
+        y_test = pickle.load(file)
+
+    return x_train, y_train, x_test, y_test
 
 
 def _test_scores(model, x_train, y_train, x_test, y_test):
@@ -151,15 +132,9 @@ def test_homework():
     """Tests"""
 
     model = _load_model()
-    _test_components(model)
-
-    train_df = pd.read_csv("files/input/train_data.csv.zip", compression="zip")
-    test_df = pd.read_csv("files/input/test_data.csv.zip", compression="zip")
-
-    x_train, y_train = split_df(train_df)
-    x_test, y_test = split_df(test_df)
-
-    _test_scores(model, x_train, y_train, x_test, y_test)
-
+    x_train, y_train, x_test, y_test = _load_grading_data()
     metrics = _load_metrics()
+
+    _test_components(model)
+    _test_scores(model, x_train, y_train, x_test, y_test)
     _test_metrics(metrics)
